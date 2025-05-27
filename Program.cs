@@ -5,6 +5,17 @@ using TodoAPI_Portfolio.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configura CORS permitindo qualquer origem
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddScoped<TodoService>();
