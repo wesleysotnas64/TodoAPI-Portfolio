@@ -1,30 +1,29 @@
-using DotNetEnv;
+﻿using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using TodoAPI_Portfolio.Data;
 using TodoAPI_Portfolio.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configura CORS permitindo qualquer origem
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddScoped<TodoService>();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configura o DbContext usando a connection string do appsettings.json ("DefaultConnection")
+// Configura o DbContext
 Env.Load();
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 
@@ -33,12 +32,15 @@ builder.Services.AddDbContext<TodoDbContext>(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// 🚨 CORS precisa ser colocado antes de Authorization e MapControllers
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
