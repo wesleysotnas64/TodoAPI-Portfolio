@@ -10,15 +10,20 @@ var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 
-// Configura CORS para aceitar apenas a origem do frontend e permitir credenciais
+// Carrega as origens permitidas, separadas por vírgula, ou usa localhost como padrão
+var urlOrigins = (Environment.GetEnvironmentVariable("URL_ORIGINS") ?? "http://localhost:5173")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+// Configura CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.WithOrigins(Environment.GetEnvironmentVariable("URL_ORIGIN")) // endereço do frontend
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy
+            .WithOrigins(urlOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -36,23 +41,19 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Swagger para dev
+// Swagger em desenvolvimento
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Ativa CORS antes de autenticação/autorização e controllers
+// Middleware
 app.UseCors("CorsPolicy");
-
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Mapeia o Hub SignalR
 app.MapHub<TodoHub>("/todoHub");
 
 app.Run();
