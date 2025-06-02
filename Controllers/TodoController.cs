@@ -2,6 +2,8 @@
 using TodoAPI_Portfolio.Entities;
 using TodoAPI_Portfolio.Services;
 using TodoAPI_Portfolio.DTO;
+using Microsoft.AspNetCore.SignalR;
+using TodoAPI_Portfolio.Hubs;
 
 namespace TodoAPI_Portfolio.Controllers
 {
@@ -10,10 +12,12 @@ namespace TodoAPI_Portfolio.Controllers
     public class TodoController : ControllerBase
     {
         private readonly TodoService _todoService;
+        private readonly IHubContext<TodoHub> _hubContext;
 
-        public TodoController(TodoService todoService)
+        public TodoController(TodoService todoService, IHubContext<TodoHub> hubContext)
         {
             _todoService = todoService;
+            _hubContext = hubContext;
         }
 
         // GET: api/todo
@@ -41,7 +45,7 @@ namespace TodoAPI_Portfolio.Controllers
 
         // POST: api/todo
         [HttpPost("todo")]
-        public IActionResult Save([FromBody] TodoItemDTO item)
+        public async Task<IActionResult> Save([FromBody] TodoItemDTO item)
         {
             TodoItem todoItem = new()
             {
@@ -52,16 +56,20 @@ namespace TodoAPI_Portfolio.Controllers
             };
 
             _todoService.Save(todoItem);
+
+            await _hubContext.Clients.All.SendAsync("TodoUpdated");
+
             return Ok();
         }
 
         // PUT: api/todo
         [HttpPut("todo")]
-        public IActionResult Update([FromBody] TodoItem item)
+        public async Task<IActionResult> Update([FromBody] TodoItem item)
         {
             bool updated = _todoService.Update(item);
             if (updated)
             {
+                await _hubContext.Clients.All.SendAsync("TodoUpdated");
                 return NoContent();
             }
             else
@@ -72,11 +80,12 @@ namespace TodoAPI_Portfolio.Controllers
 
         // DELETE: api/todo/{id}
         [HttpDelete("todo/{id}")]
-        public IActionResult Delete(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             bool deleted = _todoService.Delete(id);
             if(deleted)
             {
+                await _hubContext.Clients.All.SendAsync("TodoUpdated");
                 return NoContent();
             }
             else
