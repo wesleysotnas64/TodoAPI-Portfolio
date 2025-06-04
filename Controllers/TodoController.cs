@@ -3,7 +3,6 @@ using TodoAPI_Portfolio.Entities;
 using TodoAPI_Portfolio.Services;
 using TodoAPI_Portfolio.DTO;
 using Microsoft.AspNetCore.SignalR;
-using TodoAPI_Portfolio.Hubs;
 
 namespace TodoAPI_Portfolio.Controllers
 {
@@ -12,12 +11,10 @@ namespace TodoAPI_Portfolio.Controllers
     public class TodoController : ControllerBase
     {
         private readonly TodoService _todoService;
-        private readonly IHubContext<TodoHub> _hubContext;
 
-        public TodoController(TodoService todoService, IHubContext<TodoHub> hubContext)
+        public TodoController(TodoService todoService)
         {
             _todoService = todoService;
-            _hubContext = hubContext;
         }
 
         // GET: api/todo
@@ -57,8 +54,6 @@ namespace TodoAPI_Portfolio.Controllers
 
             _todoService.Save(todoItem);
 
-            await _hubContext.Clients.All.SendAsync("TodoUpdated");
-
             return Ok();
         }
 
@@ -69,7 +64,6 @@ namespace TodoAPI_Portfolio.Controllers
             bool updated = _todoService.Update(item);
             if (updated)
             {
-                await _hubContext.Clients.All.SendAsync("TodoUpdated");
                 return NoContent();
             }
             else
@@ -85,7 +79,6 @@ namespace TodoAPI_Portfolio.Controllers
             bool deleted = _todoService.Delete(id);
             if(deleted)
             {
-                await _hubContext.Clients.All.SendAsync("TodoUpdated");
                 return NoContent();
             }
             else

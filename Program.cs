@@ -1,7 +1,6 @@
 ﻿using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using TodoAPI_Portfolio.Data;
-using TodoAPI_Portfolio.Hubs;
 using TodoAPI_Portfolio.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,25 +9,17 @@ var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 
-// Carrega as origens permitidas, separadas por vírgula, ou usa localhost como padrão
-var urlOrigins = (Environment.GetEnvironmentVariable("URL_ORIGINS") ?? "http://localhost:5173")
-    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-// Configura CORS
+// Configura CORS para aceitar qualquer origem
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
         policy
-            .WithOrigins(urlOrigins)
+            .AllowAnyOrigin()
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowAnyMethod();
     });
 });
-
-// Adiciona SignalR
-builder.Services.AddSignalR();
 
 // Serviços e contexto
 builder.Services.AddScoped<TodoService>();
@@ -54,6 +45,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<TodoHub>("/todoHub");
 
 app.Run();
